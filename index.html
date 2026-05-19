@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Impulso RH - Plataforma de Desenvolvimento</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">IR</div>
+          <div>
+            <strong>Impulso RH</strong>
+            <span>Desenvolvimento de equipes</span>
+          </div>
+        </div>
+
+        <nav class="nav-list" aria-label="Menu principal">
+          <button class="nav-item active" data-view="dashboard">Dashboard</button>
+          <button class="nav-item" data-view="questionario">Questionario</button>
+          <button class="nav-item" data-view="resultado">Resultado</button>
+          <button class="nav-item" data-view="gestor">Gestor</button>
+          <button class="nav-item" data-view="admin">RH/Admin</button>
+        </nav>
+
+        <div class="profile-card">
+          <span class="eyebrow">Perfil ativo</span>
+          <strong id="activeUserName">Marina Costa</strong>
+          <small id="activeUserRole">Funcionaria administrativa</small>
+        </div>
+      </aside>
+
+      <main>
+        <header class="topbar">
+          <div>
+            <span class="eyebrow">Amostra MVP</span>
+            <h1 id="pageTitle">Dashboard</h1>
+          </div>
+
+          <div class="login-box">
+            <label for="profileSelect">Entrar como</label>
+            <select id="profileSelect">
+              <option value="funcionario">Funcionario</option>
+              <option value="gestor">Gestor</option>
+              <option value="rh">RH/Admin</option>
+            </select>
+          </div>
+        </header>
+
+        <section id="dashboard" class="view active-view">
+          <div class="hero-band">
+            <div>
+              <span class="eyebrow">Objetivo da plataforma</span>
+              <h2>Acompanhar desenvolvimento, identificar dificuldades e apoiar planos de melhoria.</h2>
+              <p>
+                Esta primeira versao simula o fluxo central: login por perfil, questionario,
+                evolucao, analises automaticas e acompanhamento por gestor e RH.
+              </p>
+            </div>
+            <div class="score-ring">
+              <span>82%</span>
+              <small>Desempenho geral</small>
+            </div>
+          </div>
+
+          <div class="kpi-grid">
+            <article class="kpi-card">
+              <span>Questionarios respondidos</span>
+              <strong>18</strong>
+              <small>+4 nesta semana</small>
+            </article>
+            <article class="kpi-card">
+              <span>Media da equipe</span>
+              <strong>4.1</strong>
+              <small>escala de 1 a 5</small>
+            </article>
+            <article class="kpi-card">
+              <span>Planos ativos</span>
+              <strong>7</strong>
+              <small>3 vencem este mes</small>
+            </article>
+            <article class="kpi-card">
+              <span>Setor em destaque</span>
+              <strong>Financeiro</strong>
+              <small>organizacao 4.8</small>
+            </article>
+          </div>
+
+          <div class="content-grid">
+            <section class="panel">
+              <div class="panel-heading">
+                <h3>Evolucao mensal</h3>
+                <span>Ultimos 6 meses</span>
+              </div>
+              <div class="bar-chart" id="monthlyChart" aria-label="Grafico de evolucao mensal"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <h3>Competencias</h3>
+                <span>Media atual</span>
+              </div>
+              <div class="competency-list" id="competencyList"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="questionario" class="view">
+          <section class="panel wide">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">Autoavaliacao</span>
+                <h3>Questionario de competencias</h3>
+              </div>
+              <button class="primary-button" id="saveAnswers">Salvar respostas</button>
+            </div>
+            <div class="question-list" id="questionList"></div>
+          </section>
+        </section>
+
+        <section id="resultado" class="view">
+          <div class="content-grid">
+            <section class="panel">
+              <div class="panel-heading">
+                <h3>Pontos fortes</h3>
+                <span>Baseado nas maiores notas</span>
+              </div>
+              <ul class="insight-list positive">
+                <li>Organizacao consistente das atividades e prazos.</li>
+                <li>Boa cooperacao com a equipe direta.</li>
+                <li>Facilidade para manter rotina de entregas.</li>
+              </ul>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <h3>Pontos de melhoria</h3>
+                <span>Prioridades sugeridas</span>
+              </div>
+              <ul class="insight-list warning">
+                <li>Melhorar comunicacao entre setores antes de repassar demandas.</li>
+                <li>Desenvolver mais autonomia na resolucao de problemas.</li>
+                <li>Registrar feedbacks e combinados com mais frequencia.</li>
+              </ul>
+            </section>
+          </div>
+
+          <section class="panel wide">
+            <div class="panel-heading">
+              <h3>Analise automatica</h3>
+              <span>Primeira regra do MVP</span>
+            </div>
+            <div class="analysis-card">
+              <strong>Resumo</strong>
+              <p>
+                A funcionaria demonstra boa organizacao e constancia nas entregas. O principal
+                ponto de evolucao esta na comunicacao intersetorial, especialmente em demandas
+                que dependem de alinhamento com outras areas.
+              </p>
+              <strong>Plano sugerido</strong>
+              <p>
+                Realizar alinhamentos semanais de 15 minutos, registrar combinados no Kanban e
+                revisar prioridades com o gestor a cada sexta-feira.
+              </p>
+            </div>
+          </section>
+        </section>
+
+        <section id="gestor" class="view">
+          <section class="panel wide">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">Painel do gestor</span>
+                <h3>Equipe administrativa</h3>
+              </div>
+              <button class="secondary-button">Novo feedback</button>
+            </div>
+            <div class="team-table" id="teamTable"></div>
+          </section>
+
+          <section class="panel wide">
+            <div class="panel-heading">
+              <h3>Plano de melhoria</h3>
+              <span>Exemplo editavel</span>
+            </div>
+            <div class="goal-board">
+              <article>
+                <span>Meta</span>
+                <strong>Reduzir falhas de comunicacao entre setores</strong>
+              </article>
+              <article>
+                <span>Acao</span>
+                <strong>Checklist de passagem de demandas</strong>
+              </article>
+              <article>
+                <span>Prazo</span>
+                <strong>30 dias</strong>
+              </article>
+            </div>
+          </section>
+        </section>
+
+        <section id="admin" class="view">
+          <div class="content-grid">
+            <section class="panel">
+              <div class="panel-heading">
+                <h3>Usuarios</h3>
+                <span>Cadastro inicial</span>
+              </div>
+              <div class="mini-form">
+                <input type="text" placeholder="Nome do funcionario" />
+                <input type="email" placeholder="email@empresa.com" />
+                <select>
+                  <option>Funcionario</option>
+                  <option>Gestor</option>
+                  <option>RH/Admin</option>
+                </select>
+                <button class="primary-button">Cadastrar</button>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <h3>Perguntas</h3>
+                <span>Banco do questionario</span>
+              </div>
+              <div class="mini-form">
+                <input type="text" placeholder="Digite a pergunta" />
+                <select>
+                  <option>Comunicacao</option>
+                  <option>Organizacao</option>
+                  <option>Trabalho em equipe</option>
+                  <option>Resolucao de problemas</option>
+                </select>
+                <button class="secondary-button">Adicionar pergunta</button>
+              </div>
+            </section>
+          </div>
+
+          <section class="panel wide">
+            <div class="panel-heading">
+              <h3>Indicadores gerais</h3>
+              <span>Visao do RH</span>
+            </div>
+            <div class="department-grid">
+              <article><span>Administrativo</span><strong>4.0</strong></article>
+              <article><span>Financeiro</span><strong>4.4</strong></article>
+              <article><span>Comercial</span><strong>3.7</strong></article>
+              <article><span>Operacoes</span><strong>3.9</strong></article>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
