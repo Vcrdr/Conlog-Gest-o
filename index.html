@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Impulso RH - Plataforma de Desenvolvimento</title>
+    <title>Gestão ADM. | Conlog</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -13,13 +13,54 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="app-shell">
+    <section class="login-screen" id="loginScreen">
+      <div class="login-topline">
+        <span>contato@conlogsa.com.br</span>
+        <span>Área Colaborador</span>
+      </div>
+      <div class="login-panel">
+        <div class="brand login-brand">
+          <div class="brand-mark">CL</div>
+          <div>
+            <strong>Conlog</strong>
+            <span>Gestão ADM.</span>
+          </div>
+        </div>
+
+        <div>
+          <span class="eyebrow">Área restrita</span>
+          <h1>Gestão de pessoas e desempenho</h1>
+          <p>
+            Acesse questionarios, feedbacks, metas e indicadores administrativos em um
+            ambiente simples para acompanhamento interno.
+          </p>
+        </div>
+
+        <form class="login-form" id="loginForm">
+          <label for="loginEmail">E-mail</label>
+          <input id="loginEmail" type="email" placeholder="seu.email@empresa.com" required />
+
+          <label for="loginPassword">Senha</label>
+          <input id="loginPassword" type="password" placeholder="Digite sua senha" required />
+
+          <button class="primary-button" type="submit">Entrar</button>
+          <p class="form-message" id="loginMessage"></p>
+        </form>
+
+        <div class="demo-note">
+          <strong>Primeiro acesso</strong>
+          <span>O RH/Admin cria o usuario, define a funcao e acompanha os acessos da equipe.</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="app-shell is-hidden" id="appShell">
       <aside class="sidebar">
         <div class="brand">
-          <div class="brand-mark">IR</div>
+          <div class="brand-mark">CL</div>
           <div>
-            <strong>Impulso RH</strong>
-            <span>Desenvolvimento de equipes</span>
+            <strong>Conlog</strong>
+            <span>Gestão ADM.</span>
           </div>
         </div>
 
@@ -41,28 +82,27 @@
       <main>
         <header class="topbar">
           <div>
-            <span class="eyebrow">Amostra MVP</span>
+            <span class="eyebrow">Área Colaborador</span>
             <h1 id="pageTitle">Dashboard</h1>
           </div>
 
-          <div class="login-box">
-            <label for="profileSelect">Entrar como</label>
-            <select id="profileSelect">
-              <option value="funcionario">Funcionario</option>
-              <option value="gestor">Gestor</option>
-              <option value="rh">RH/Admin</option>
-            </select>
+          <div class="session-box">
+            <div>
+              <span class="eyebrow">Sessao ativa</span>
+              <strong id="sessionEmail">usuario@empresa.com</strong>
+            </div>
+            <button class="secondary-button" id="logoutButton" type="button">Sair</button>
           </div>
         </header>
 
         <section id="dashboard" class="view active-view">
           <div class="hero-band">
             <div>
-              <span class="eyebrow">Objetivo da plataforma</span>
+              <span class="eyebrow">Gestão administrativa</span>
               <h2>Acompanhar desenvolvimento, identificar dificuldades e apoiar planos de melhoria.</h2>
               <p>
-                Esta primeira versao simula o fluxo central: login por perfil, questionario,
-                evolucao, analises automaticas e acompanhamento por gestor e RH.
+                Plataforma interna para organizar avaliações, metas e feedbacks, mantendo
+                gestores e RH próximos da evolução das equipes.
               </p>
             </div>
             <div class="score-ring">
@@ -262,6 +302,8 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

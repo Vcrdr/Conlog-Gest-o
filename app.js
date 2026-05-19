@@ -3,16 +3,19 @@ const profiles = {
     name: "Marina Costa",
     role: "Funcionaria administrativa",
     defaultView: "dashboard",
+    allowedViews: ["dashboard", "questionario", "resultado"],
   },
   gestor: {
     name: "Carlos Mendes",
     role: "Gestor administrativo",
     defaultView: "gestor",
+    allowedViews: ["dashboard", "gestor", "resultado"],
   },
-  rh: {
+  rh_admin: {
     name: "Ana Ribeiro",
     role: "RH/Admin",
     defaultView: "admin",
+    allowedViews: ["dashboard", "questionario", "resultado", "gestor", "admin"],
   },
 };
 
@@ -25,7 +28,7 @@ const competencies = [
   { name: "Gestao de tempo", score: 4.4 },
 ];
 
-const questions = [
+let questions = [
   {
     category: "Comunicacao",
     text: "Voce consegue se comunicar bem com outros setores?",
@@ -85,12 +88,34 @@ const pageTitles = {
 const navButtons = document.querySelectorAll(".nav-item");
 const views = document.querySelectorAll(".view");
 const pageTitle = document.querySelector("#pageTitle");
-const profileSelect = document.querySelector("#profileSelect");
 const activeUserName = document.querySelector("#activeUserName");
 const activeUserRole = document.querySelector("#activeUserRole");
 const toast = document.querySelector("#toast");
+const appShell = document.querySelector("#appShell");
+const loginScreen = document.querySelector("#loginScreen");
+const loginForm = document.querySelector("#loginForm");
+const loginEmail = document.querySelector("#loginEmail");
+const loginPassword = document.querySelector("#loginPassword");
+const loginMessage = document.querySelector("#loginMessage");
+const logoutButton = document.querySelector("#logoutButton");
+const sessionEmail = document.querySelector("#sessionEmail");
+const supabaseConfig = window.GESTAO_ADM_SUPABASE;
+const hasSupabaseConfig =
+  Boolean(supabaseConfig?.url) &&
+  Boolean(supabaseConfig?.publishableKey) &&
+  supabaseConfig.publishableKey !== "COLE_AQUI_SUA_PUBLISHABLE_KEY";
+const database =
+  hasSupabaseConfig && window.supabase
+    ? window.supabase.createClient(supabaseConfig.url, supabaseConfig.publishableKey)
+    : null;
+let currentProfile = null;
 
 function showView(viewId) {
+  if (currentProfile && !currentProfile.allowedViews.includes(viewId)) {
+    showToast("Seu perfil nao tem acesso a esta area.");
+    return;
+  }
+
   views.forEach((view) => view.classList.toggle("active-view", view.id === viewId));
   navButtons.forEach((button) => button.classList.toggle("active", button.dataset.view === viewId));
   pageTitle.textContent = pageTitles[viewId];
@@ -137,6 +162,16 @@ function renderCompetencies() {
 
 function renderQuestions() {
   const list = document.querySelector("#questionList");
+  if (!questions.length) {
+    list.innerHTML = `
+      <div class="analysis-card">
+        <strong>Nenhuma pergunta encontrada</strong>
+        <p>Confira se o seed.sql foi executado e se as politicas de leitura foram criadas no Supabase.</p>
+      </div>
+    `;
+    return;
+  }
+
   list.innerHTML = questions
     .map(
       (question, questionIndex) => `
@@ -191,17 +226,136 @@ function renderTeam() {
   `;
 }
 
+function getProfileLabel(role) {
+  const labels = {
+    funcionario: "Funcionario",
+    gestor: "Gestor",
+    rh_admin: "RH/Admin",
+  };
+
+  return labels[role] || "Usuario";
+}
+
+function normalizeProfile(profile) {
+  const fallback = profiles[profile.role] || profiles.funcionario;
+
+  return {
+    ...fallback,
+    id: profile.id,
+    name: profile.name,
+    email: profile.email,
+    roleKey: profile.role,
+    role: profile.job_title || getProfileLabel(profile.role),
+  };
+}
+
+function updateNavigationForRole() {
+  navButtons.forEach((button) => {
+    const canAccess = currentProfile.allowedViews.includes(button.dataset.view);
+    button.hidden = !canAccess;
+  });
+}
+
+function openAuthenticatedApp(profile) {
+  currentProfile = normalizeProfile(profile);
+  activeUserName.textContent = currentProfile.name;
+  activeUserRole.textContent = currentProfile.role;
+  sessionEmail.textContent = currentProfile.email;
+  loginMessage.textContent = "";
+  loginForm.reset();
+  document.body.classList.add("authenticated");
+  appShell.classList.remove("is-hidden");
+  loginScreen.classList.add("is-hidden");
+  updateNavigationForRole();
+  showView(currentProfile.defaultView);
+}
+
+function closeAuthenticatedApp() {
+  currentProfile = null;
+  document.body.classList.remove("authenticated");
+  appShell.classList.add("is-hidden");
+  loginScreen.classList.remove("is-hidden");
+  navButtons.forEach((button) => {
+    button.hidden = false;
+  });
+}
+
+async function loadProfileByEmail(email) {
+  const { data, error } = await database
+    .from("profiles")
+    .select("id, name, email, role, job_title")
+    .eq("email", email)
+    .single();
+
+  if (error) {
+    throw new Error("Login feito, mas nao encontrei um perfil cadastrado para este e-mail.");
+  }
+
+  return data;
+}
+
+async function handleLogin(event) {
+  event.preventDefault();
+  loginMessage.textContent = "";
+
+  if (!database) {
+    loginMessage.textContent = "Configure a Publishable key do Supabase em supabase-config.js.";
+    return;
+  }
+
+  const email = loginEmail.value.trim();
+  const password = loginPassword.value;
+  const submitButton = loginForm.querySelector("button");
+  submitButton.disabled = true;
+  submitButton.textContent = "Entrando...";
+
+  try {
+    const { data, error } = await database.auth.signInWithPassword({ email, password });
+    if (error) throw new Error("E-mail ou senha invalidos.");
+
+    const profile = await loadProfileByEmail(data.user.email);
+    openAuthenticatedApp(profile);
+    showToast("Login realizado com sucesso.");
+  } catch (error) {
+    loginMessage.textContent = error.message;
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = "Entrar";
+  }
+}
+
+async function handleLogout() {
+  if (database) {
+    await database.auth.signOut();
+  }
+
+  closeAuthenticatedApp();
+  showToast("Sessao encerrada.");
+}
+
+async function restoreSession() {
+  if (!database) return;
+
+  const { data } = await database.auth.getSession();
+  const user = data.session?.user;
+  if (!user?.email) return;
+
+  try {
+    const profile = await loadProfileByEmail(user.email);
+    openAuthenticatedApp(profile);
+  } catch (error) {
+    await database.auth.signOut();
+    closeAuthenticatedApp();
+    loginMessage.textContent = error.message;
+  }
+}
+
 navButtons.forEach((button) => {
   button.addEventListener("click", () => showView(button.dataset.view));
 });
 
-profileSelect.addEventListener("change", (event) => {
-  const profile = profiles[event.target.value];
-  activeUserName.textContent = profile.name;
-  activeUserRole.textContent = profile.role;
-  showView(profile.defaultView);
-  showToast(`Login demonstrativo: ${profile.role}`);
-});
+loginForm.addEventListener("submit", handleLogin);
+logoutButton.addEventListener("click", handleLogout);
 
 document.querySelector("#questionList").addEventListener("click", (event) => {
   const button = event.target.closest("button[data-value]");
@@ -214,10 +368,41 @@ document.querySelector("#questionList").addEventListener("click", (event) => {
 });
 
 document.querySelector("#saveAnswers").addEventListener("click", () => {
-  showToast("Respostas salvas na demonstracao. Proximo passo: ligar ao banco de dados.");
+  showToast("Respostas salvas apenas nesta demonstracao. O salvamento real sera a proxima etapa.");
 });
 
-renderMonthlyChart();
-renderCompetencies();
-renderQuestions();
-renderTeam();
+async function loadQuestionsFromDatabase() {
+  if (!database) return;
+
+  const { data, error } = await database
+    .from("questions")
+    .select("question_text, competencies(name)")
+    .eq("active", true)
+    .order("question_text");
+
+  if (error) {
+    console.error("Erro ao buscar perguntas no Supabase:", error);
+    showToast("Nao consegui carregar o banco. Mantive os dados demonstrativos.");
+    return;
+  }
+
+  questions = data.map((item) => ({
+    category: item.competencies?.name || "Competencia",
+    text: item.question_text,
+    answer: 3,
+  }));
+
+  renderQuestions();
+  showToast("Perguntas carregadas do Supabase.");
+}
+
+async function startApp() {
+  renderMonthlyChart();
+  renderCompetencies();
+  renderQuestions();
+  renderTeam();
+  await loadQuestionsFromDatabase();
+  await restoreSession();
+}
+
+startApp();
