@@ -1,4 +1,4 @@
 window.GESTAO_ADM_SUPABASE = {
   url: "https://pgfygfvjiylufpxeyvjj.supabase.co",
-  publishableKey: "COLE_AQUI_SUA_PUBLISHABLE_KEY",
+  publishableKey: "sb_publishable_i_-GfIdb3v_9fM9_c4WqYA_D0sqnuyf"
 };
