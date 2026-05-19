@@ -30,31 +30,37 @@ const competencies = [
 
 let questions = [
   {
+    id: null,
     category: "Comunicacao",
     text: "Voce consegue se comunicar bem com outros setores?",
     answer: 3,
   },
   {
+    id: null,
     category: "Comunicacao",
     text: "Voce entende claramente suas tarefas antes de inicia-las?",
     answer: 4,
   },
   {
+    id: null,
     category: "Organizacao",
     text: "Voce consegue manter suas atividades organizadas?",
     answer: 5,
   },
   {
+    id: null,
     category: "Trabalho em equipe",
     text: "Voce coopera com colegas para resolver problemas?",
     answer: 4,
   },
   {
+    id: null,
     category: "Resolucao de problemas",
     text: "Voce tenta resolver dificuldades antes de repassar a demanda?",
     answer: 3,
   },
   {
+    id: null,
     category: "Gestao de tempo",
     text: "Seus prazos costumam ser cumpridos?",
     answer: 4,
@@ -333,6 +339,61 @@ async function handleLogout() {
   showToast("Sessao encerrada.");
 }
 
+function ensureCanSaveAnswers() {
+  if (!database) {
+    throw new Error("Configure a Publishable key do Supabase em supabase-config.js.");
+  }
+
+  if (!currentProfile) {
+    throw new Error("Entre na plataforma antes de salvar respostas.");
+  }
+
+  if (!questions.every((question) => question.id)) {
+    throw new Error("As perguntas precisam ser carregadas do Supabase antes de salvar.");
+  }
+}
+
+async function saveAnswers() {
+  ensureCanSaveAnswers();
+
+  const now = new Date();
+  const title = `Autoavaliacao - ${now.toLocaleDateString("pt-BR")}`;
+  const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+  const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+
+  const { data: evaluation, error: evaluationError } = await database
+    .from("evaluations")
+    .insert({
+      employee_id: currentProfile.id,
+      evaluator_id: currentProfile.id,
+      title,
+      status: "submitted",
+      period_start: periodStart,
+      period_end: periodEnd,
+      submitted_at: now.toISOString(),
+    })
+    .select("id")
+    .single();
+
+  if (evaluationError) {
+    throw new Error("Nao consegui criar a avaliacao no banco.");
+  }
+
+  const answers = questions.map((question) => ({
+    evaluation_id: evaluation.id,
+    question_id: question.id,
+    score: question.answer,
+  }));
+
+  const { error: answersError } = await database.from("answers").insert(answers);
+
+  if (answersError) {
+    throw new Error("A avaliacao foi criada, mas nao consegui salvar as respostas.");
+  }
+
+  return evaluation.id;
+}
+
 async function restoreSession() {
   if (!database) return;
 
@@ -367,8 +428,21 @@ document.querySelector("#questionList").addEventListener("click", (event) => {
   renderQuestions();
 });
 
-document.querySelector("#saveAnswers").addEventListener("click", () => {
-  showToast("Respostas salvas apenas nesta demonstracao. O salvamento real sera a proxima etapa.");
+document.querySelector("#saveAnswers").addEventListener("click", async () => {
+  const button = document.querySelector("#saveAnswers");
+  button.disabled = true;
+  button.textContent = "Salvando...";
+
+  try {
+    await saveAnswers();
+    showToast("Respostas salvas no banco com sucesso.");
+    showView("resultado");
+  } catch (error) {
+    showToast(error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Salvar respostas";
+  }
 });
 
 async function loadQuestionsFromDatabase() {
@@ -376,7 +450,7 @@ async function loadQuestionsFromDatabase() {
 
   const { data, error } = await database
     .from("questions")
-    .select("question_text, competencies(name)")
+    .select("id, question_text, competencies(name)")
     .eq("active", true)
     .order("question_text");
 
@@ -387,6 +461,7 @@ async function loadQuestionsFromDatabase() {
   }
 
   questions = data.map((item) => ({
+    id: item.id,
     category: item.competencies?.name || "Competencia",
     text: item.question_text,
     answer: 3,
