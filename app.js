@@ -28,41 +28,91 @@ const competencies = [
   { name: "Gestao de tempo", score: 4.4 },
 ];
 
+const competencyOrder = competencies.map((competency) => competency.name);
+
 let questions = [
   {
     id: null,
     category: "Comunicacao",
-    text: "Voce consegue se comunicar bem com outros setores?",
+    text: "Voce informa atrasos, mudancas ou bloqueios antes que eles afetem outros setores?",
     answer: 3,
   },
   {
     id: null,
     category: "Comunicacao",
-    text: "Voce entende claramente suas tarefas antes de inicia-las?",
+    text: "Voce registra combinados importantes para que a equipe acompanhe a demanda?",
     answer: 4,
   },
   {
     id: null,
     category: "Organizacao",
-    text: "Voce consegue manter suas atividades organizadas?",
+    text: "Voce prioriza as atividades do dia conforme urgencia, prazo e impacto no setor?",
     answer: 5,
   },
   {
     id: null,
-    category: "Trabalho em equipe",
-    text: "Voce coopera com colegas para resolver problemas?",
+    category: "Organizacao",
+    text: "Voce mantem documentos, controles e informacoes em locais acessiveis para a equipe?",
     answer: 4,
   },
   {
     id: null,
+    category: "Trabalho em equipe",
+    text: "Voce apoia colegas quando uma demanda depende de mais de uma area?",
+    answer: 4,
+  },
+  {
+    id: null,
+    category: "Trabalho em equipe",
+    text: "Voce compartilha informacoes que ajudam o fluxo administrativo acontecer sem retrabalho?",
+    answer: 3,
+  },
+  {
+    id: null,
+    category: "Lideranca",
+    text: "Voce orienta colegas quando percebe duvidas ou desalinhamentos no processo?",
+    answer: 3,
+  },
+  {
+    id: null,
+    category: "Lideranca",
+    text: "Voce assume responsabilidade por decisoes dentro do seu papel antes de repassar o problema?",
+    answer: 3,
+  },
+  {
+    id: null,
     category: "Resolucao de problemas",
-    text: "Voce tenta resolver dificuldades antes de repassar a demanda?",
+    text: "Voce identifica a causa do problema antes de buscar uma solucao?",
+    answer: 3,
+  },
+  {
+    id: null,
+    category: "Resolucao de problemas",
+    text: "Voce propoe alternativas quando encontra impedimentos em uma demanda?",
+    answer: 3,
+  },
+  {
+    id: null,
+    category: "Proatividade",
+    text: "Voce antecipa necessidades do setor sem esperar uma cobranca?",
+    answer: 3,
+  },
+  {
+    id: null,
+    category: "Proatividade",
+    text: "Voce sugere melhorias para reduzir retrabalho ou atrasos?",
     answer: 3,
   },
   {
     id: null,
     category: "Gestao de tempo",
-    text: "Seus prazos costumam ser cumpridos?",
+    text: "Voce cumpre prazos combinados mesmo quando surgem demandas paralelas?",
+    answer: 4,
+  },
+  {
+    id: null,
+    category: "Gestao de tempo",
+    text: "Voce comunica prioridades quando nao consegue atender tudo no prazo?",
     answer: 4,
   },
 ];
@@ -178,32 +228,59 @@ function renderQuestions() {
     return;
   }
 
-  list.innerHTML = questions
+  const groupedQuestions = questions.reduce((groups, question, questionIndex) => {
+    const category = question.category || "Competencia";
+    if (!groups[category]) groups[category] = [];
+    groups[category].push({ ...question, questionIndex });
+    return groups;
+  }, {});
+
+  list.innerHTML = Object.entries(groupedQuestions)
     .map(
-      (question, questionIndex) => `
-        <article class="question-row">
-          <div class="question-top">
-            <div>
-              <span class="eyebrow">${question.category}</span>
-              <strong>${question.text}</strong>
-            </div>
-            <span>Nota ${question.answer}</span>
+      ([category, categoryQuestions]) => `
+        <section class="question-group">
+          <div class="question-group-heading">
+            <span>${category}</span>
+            <small>${categoryQuestions.length} pergunta${categoryQuestions.length > 1 ? "s" : ""}</small>
           </div>
-          <div class="rating" data-question="${questionIndex}">
-            ${[1, 2, 3, 4, 5]
-              .map(
-                (value) => `
-                  <button class="${value === question.answer ? "selected" : ""}" data-value="${value}" aria-label="Nota ${value}">
-                    ${value}
-                  </button>
-                `,
-              )
-              .join("")}
-          </div>
-        </article>
+          ${categoryQuestions
+            .map(
+              (question) => `
+                <article class="question-row">
+                  <div class="question-top">
+                    <strong>${question.text}</strong>
+                    <span>Nota ${question.answer}</span>
+                  </div>
+                  <div class="rating" data-question="${question.questionIndex}">
+                    ${[1, 2, 3, 4, 5]
+                      .map(
+                        (value) => `
+                          <button class="${value === question.answer ? "selected" : ""}" data-value="${value}" aria-label="Nota ${value}">
+                            ${value}
+                          </button>
+                        `,
+                      )
+                      .join("")}
+                  </div>
+                </article>
+              `,
+            )
+            .join("")}
+        </section>
       `,
     )
     .join("");
+}
+
+function sortQuestionsByCompetency(questionList) {
+  return [...questionList].sort((first, second) => {
+    const firstCategory = competencyOrder.indexOf(first.category);
+    const secondCategory = competencyOrder.indexOf(second.category);
+    const firstOrder = firstCategory === -1 ? 999 : firstCategory;
+    const secondOrder = secondCategory === -1 ? 999 : secondCategory;
+    if (firstOrder !== secondOrder) return firstOrder - secondOrder;
+    return first.text.localeCompare(second.text);
+  });
 }
 
 function renderTeam() {
@@ -460,12 +537,22 @@ async function loadQuestionsFromDatabase() {
     return;
   }
 
-  questions = data.map((item) => ({
-    id: item.id,
-    category: item.competencies?.name || "Competencia",
-    text: item.question_text,
-    answer: 3,
-  }));
+  const uniqueQuestions = new Map();
+
+  data.forEach((item) => {
+    const category = item.competencies?.name || "Competencia";
+    const key = `${category.toLowerCase()}::${item.question_text.toLowerCase()}`;
+    if (!uniqueQuestions.has(key)) {
+      uniqueQuestions.set(key, {
+        id: item.id,
+        category,
+        text: item.question_text,
+        answer: 3,
+      });
+    }
+  });
+
+  questions = sortQuestionsByCompetency(Array.from(uniqueQuestions.values()));
 
   renderQuestions();
   showToast("Perguntas carregadas do Supabase.");
